@@ -17,10 +17,32 @@ export const getSimpleRouteJson = (
     layerCount?: number
     optimizeWithGoalBoxes?: boolean
     connMap?: ConnectivityMap
+    minTraceWidth?: number
   } = {},
 ): SimpleRouteJson => {
+  // Derive minTraceWidth from opts, source_trace min_trace_thickness, or source_net
+  // trace_width, falling back to the default of 0.1mm
+  let minTraceWidth = opts.minTraceWidth ?? 0.1
+  for (const element of circuitJson) {
+    if (
+      element.type === "source_trace" &&
+      typeof (element as any).min_trace_thickness === "number"
+    ) {
+      minTraceWidth = Math.min(
+        minTraceWidth,
+        (element as any).min_trace_thickness,
+      )
+    }
+    if (
+      element.type === "source_net" &&
+      typeof (element as any).trace_width === "number"
+    ) {
+      minTraceWidth = Math.min(minTraceWidth, (element as any).trace_width)
+    }
+  }
+
   const routeJson: SimpleRouteJson = {
-    minTraceWidth: 0.1,
+    minTraceWidth,
   } as Partial<SimpleRouteJson> as any
 
   routeJson.layerCount = opts.layerCount ?? 1
