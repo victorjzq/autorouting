@@ -347,13 +347,6 @@ export class MultilayerIjump extends GeneralizedAstarAutorouter {
           dir.dl === forwardDir.dl * -1
         ) {
           return false
-        } else if (
-          dir.dx === forwardDir.dx &&
-          dir.dy === forwardDir.dy &&
-          dir.dl === forwardDir.dl &&
-          node.parent?.obstacleHit
-        ) {
-          return false
         }
         return true
       })
@@ -451,7 +444,9 @@ export class MultilayerIjump extends GeneralizedAstarAutorouter {
       if (
         goalDistAlongTravelDir < travelDir.wallDistance &&
         goalDistAlongTravelDir > 0 &&
-        isGoalInTravelDir
+        isGoalInTravelDir &&
+        (overcomeDistance === null ||
+          goalDistAlongTravelDir <= overcomeDistance + this.OBSTACLE_MARGIN)
       ) {
         const isGoalOnSameLayer = node.l === goalPoint.l
 
@@ -489,14 +484,21 @@ export class MultilayerIjump extends GeneralizedAstarAutorouter {
             })
           }
         }
-        if (travelDir.wallDistance === Infinity) {
+        if (
+          travelDir.wallDistance === Infinity &&
+          isGoalInTravelDir &&
+          goalDistAlongTravelDir > 0
+        ) {
           travelDirs3.push({
             ...travelDir,
             travelDistance: goalDistAlongTravelDir,
             enterMarginCost: 0,
             travelMarginCostFactor: 1,
           })
-        } else if (travelDir.wallDistance > this.largestMargin) {
+        } else if (
+          travelDir.wallDistance !== Infinity &&
+          travelDir.wallDistance > this.largestMargin
+        ) {
           for (const { margin, enterCost, travelCostFactor } of this
             .marginsWithCosts) {
             if (travelDir.wallDistance > this.largestMargin + margin) {
